@@ -1,1 +1,99 @@
-a
+#include <SPI.h>        // Include SPI library (needed for the SD card)
+#include <SD.h>         // Include SD library
+#include <DHT.h>        // Include DHT sensor library
+const int pinCS=10;
+File dataFile;
+int msensor;
+int msensorvalue;
+int motorpin=5;
+
+#define DHTPIN 7           // DHT11 data pin is connected to Arduino pin 4
+#define DHTTYPE DHT11       // DHT11 sensor is used
+DHT dht(DHTPIN, DHTTYPE);   // Initialize DHT library
+
+void setup() {
+  // Open serial communications and wait for port to open:
+  Serial.begin(9600);
+  pinMode(msensor, INPUT);
+  pinMode(motorpin,OUTPUT);
+  delay(2000);
+  dht.begin();
+  if (SD.begin(pinCS)){
+
+    Serial.println("SD CARD READY");
+  }
+  else{
+
+    Serial.println("SD CARD NOT READY");
+  }
+ 
+}
+
+uint16_t line = 1;
+
+void loop() {
+  const int pinCS=10;
+  delay(1000);
+  // Read humidity
+  byte RH = dht.readHumidity();
+  //Read temperature in degree Celsius
+  byte Temp = dht.readTemperature();
+  SD.begin(pinCS);
+  msensor=analogRead(A0);
+  if(SD.begin(pinCS)){
+
+    Serial.println("SD CARD IS READY");
+
+  }
+  else{
+    Serial.println("SD CARD IS NOT READY");
+  }
+  if (SD.exists("temp.txt")){
+
+    Serial.println("FILe Present");
+
+  }
+  else{
+    Serial.print("FIle not exsits");
+  }
+ 
+  dataFile = SD.open("temp.txt", FILE_WRITE);
+  if (msensor>1000){
+
+    digitalWrite(motorpin,HIGH);
+  }
+  else{
+    digitalWrite(motorpin,LOW);
+  }
+
+  // if the file opened okay, write to it:
+  if (dataFile) 
+  {
+    Serial.print(line);
+    Serial.print(":    Temperature = ");
+    Serial.print(Temp);
+    Serial.print("°C,    Humidity = ");
+    Serial.print(RH);
+    Serial.println("%");
+    Serial.print(":  moisutrecontent=     " );
+    Serial.println(msensor);
+  
+    
+    // Write data to SD card file (temperature.txt)
+    dataFile.print(line++);
+    dataFile.print(":    Temperature = ");
+    dataFile.print(Temp);
+    dataFile.print("°C,    Humidity = ");
+    dataFile.print(RH);
+    dataFile.println("%");
+    dataFile.print("     Moisture COntent =  ");
+    dataFile.print(msensor);
+    dataFile.close();
+
+  }
+  // if the file didn't open, print an error:
+  else{
+    Serial.println("error in  opening the file ");
+}
+
+}
